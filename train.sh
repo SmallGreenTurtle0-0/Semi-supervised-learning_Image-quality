@@ -1,0 +1,1 @@
+python3 train.py --c config/usb_cv/fixmatch/fixmatch_naver_sample.yaml
