@@ -15,7 +15,7 @@ from torch.cuda.amp import autocast, GradScaler
 from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
 from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
 from semilearn.core.criterions import CELoss, ConsistencyLoss
-
+from semilearn.core.metrics import MAE
 
 class AlgorithmBase:
     """
@@ -72,7 +72,9 @@ class AlgorithmBase:
         # common model related parameters
         self.it = 0
         self.start_epoch = 0
-        self.best_eval_acc, self.best_it = 0.0, 0
+        self.best_eval_acc, self.best_it_acc = 0.0, 0
+        self.best_eval_mae_all, self.best_it_mae_all = np.inf, 0
+        self.best_eval_mae_3_4, self.best_it_mae_3_4 = np.inf, 0
         self.bn_controller = Bn_Controller()
         self.net_builder = net_builder
         self.ema = None
@@ -262,7 +264,6 @@ class AlgorithmBase:
         """
         if log_dict is None:
             log_dict = {}
-
         for arg, var in kwargs.items():
             log_dict[f'{prefix}/' + arg] = var
         return log_dict
@@ -288,7 +289,7 @@ class AlgorithmBase:
         """
         self.model.train()
         self.call_hook("before_run")
-
+        
         for epoch in range(self.start_epoch, self.epochs):
             self.epoch = epoch
             
@@ -324,6 +325,7 @@ class AlgorithmBase:
         eval_loader = self.loader_dict[eval_dest]
         total_loss = 0.0
         total_num = 0.0
+        mae = MAE(_range=range(self.num_classes)) 
         y_true = []
         y_pred = []
         # y_probs = []
@@ -351,6 +353,9 @@ class AlgorithmBase:
                 total_loss += loss.item() * num_batch
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
+        # convert numpy array to torch tensor
+        mae.update(torch.from_numpy(y_pred), torch.from_numpy(y_true))
+        mae_value = mae.values()
         y_logits = np.concatenate(y_logits)
         top1 = accuracy_score(y_true, y_pred)
         balanced_top1 = balanced_accuracy_score(y_true, y_pred)
@@ -360,11 +365,15 @@ class AlgorithmBase:
 
         cf_mat = confusion_matrix(y_true, y_pred, normalize='true')
         self.print_fn('confusion matrix:\n' + np.array_str(cf_mat))
+        mae.print(self.print_fn)
         self.ema.restore()
         self.model.train()
 
         eval_dict = {eval_dest+'/loss': total_loss / total_num, eval_dest+'/top-1-acc': top1, 
                      eval_dest+'/balanced_acc': balanced_top1, eval_dest+'/precision': precision, eval_dest+'/recall': recall, eval_dest+'/F1': F1}
+        # add mae value to eval_dict
+        for v, mae_v in mae_value.items():
+            eval_dict[eval_dest+f'/mae_{v}'] = mae_v
         if return_logits:
             eval_dict[eval_dest+'/logits'] = y_logits
         return eval_dict
@@ -382,8 +391,12 @@ class AlgorithmBase:
             'loss_scaler': self.loss_scaler.state_dict(),
             'it': self.it + 1,
             'epoch': self.epoch + 1,
-            'best_it': self.best_it,
+            'best_it_acc': self.best_it_acc,
             'best_eval_acc': self.best_eval_acc,
+            'best_it_mae_all': self.best_it_mae_all,
+            'best_eval_mae_all': self.best_eval_mae_all,
+            'best_it_mae_3_4': self.best_it_mae_3_4,
+            'best_eval_mae_3_4': self.best_eval_mae_3_4
         }
         if self.scheduler is not None:
             save_dict['scheduler'] = self.scheduler.state_dict()
@@ -399,7 +412,7 @@ class AlgorithmBase:
         save_filename = os.path.join(save_path, save_name)
         save_dict = self.get_save_dict()
         torch.save(save_dict, save_filename)
-        self.print_fn(f"model saved: {save_filename}")
+        self.print_fn(f"model saved at it {self.it+1}, epoch {self.epoch+1}: {save_filename}")
 
 
     def load_model(self, load_path):
@@ -413,8 +426,12 @@ class AlgorithmBase:
         self.it = checkpoint['it']
         self.start_epoch = checkpoint['epoch']
         self.epoch = self.start_epoch
-        self.best_it = checkpoint['best_it']
+        self.best_it_acc = checkpoint['best_it_acc']
         self.best_eval_acc = checkpoint['best_eval_acc']
+        self.best_it_mae_all = checkpoint['best_it_mae_all']
+        self.best_eval_mae_all = checkpoint['best_eval_mae_all']
+        self.best_it_mae_3_4 = checkpoint['best_it_mae_3_4']
+        self.best_eval_mae_3_4 = checkpoint['best_eval_mae_3_4']
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         if self.scheduler is not None and 'scheduler' in checkpoint:
             self.scheduler.load_state_dict(checkpoint['scheduler'])

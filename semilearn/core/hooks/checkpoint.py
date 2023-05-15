@@ -19,7 +19,11 @@ class CheckpointHook(Hook):
                (algorithm.distributed and algorithm.rank % algorithm.ngpus_per_node == 0):
                 algorithm.save_model('latest_model.pth', save_path)
 
-                if algorithm.it == algorithm.best_it:
-                    algorithm.save_model('model_best.pth', save_path)
+                if algorithm.it == algorithm.best_it_acc:
+                    algorithm.save_model('model_best_acc.pth', save_path)
+                if algorithm.it == algorithm.best_it_mae_all:
+                    algorithm.save_model('model_best_mae_all.pth', save_path)
+                if algorithm.it == algorithm.best_it_mae_3_4:
+                    algorithm.save_model('model_best_mae_3_4.pth', save_path)
 
         
