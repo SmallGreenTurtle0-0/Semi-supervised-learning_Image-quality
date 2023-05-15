@@ -296,4 +296,5 @@ if __name__ == "__main__":
     args = get_config()
     port = get_port()
     args.dist_url = "tcp://127.0.0.1:" + str(port)
+    print('DIST URL: ', args.dist_url)
     main(args)

@@ -1,1 +1,1 @@
-python3 train.py --c config/usb_cv/fixmatch/fixmatch_naver_sample.yaml --use_tensorboard
+python3 train.py --c config/usb_cv/fixmatch/fixmatch_naver_data70k.yaml --use_tensorboard
