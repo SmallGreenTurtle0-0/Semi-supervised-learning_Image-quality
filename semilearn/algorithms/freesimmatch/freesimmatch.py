@@ -286,7 +286,7 @@ class FreeSimMatch(AlgorithmBase):
         save_dict['p_model'] = self.hooks_dict['DistAlignHook'].p_model.cpu() 
         save_dict['p_model_ptr'] = self.hooks_dict['DistAlignHook'].p_model_ptr.cpu()
         # freematch
-        save_dict['p_model'] = self.hooks_dict['MaskingHook'].p_model.cpu()
+        # save_dict['p_model'] = self.hooks_dict['MaskingHook'].p_model.cpu()
         save_dict['time_p'] = self.hooks_dict['MaskingHook'].time_p.cpu()
         save_dict['label_hist'] = self.hooks_dict['MaskingHook'].label_hist.cpu()
         return save_dict
@@ -299,7 +299,7 @@ class FreeSimMatch(AlgorithmBase):
         self.hooks_dict['DistAlignHook'].p_model = checkpoint['p_model'].cuda(self.args.gpu)
         self.hooks_dict['DistAlignHook'].p_model_ptr = checkpoint['p_model_ptr'].cuda(self.args.gpu)
         # freematch
-        self.hooks_dict['MaskingHook'].p_model = checkpoint['p_model'].cuda(self.args.gpu)
+        # self.hooks_dict['MaskingHook'].p_model = checkpoint['p_model'].cuda(self.args.gpu)
         self.hooks_dict['MaskingHook'].time_p = checkpoint['time_p'].cuda(self.args.gpu)
         self.hooks_dict['MaskingHook'].label_hist = checkpoint['label_hist'].cuda(self.args.gpu)
         self.print_fn("additional parameter loaded")
