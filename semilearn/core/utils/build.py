@@ -10,7 +10,8 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader
 from semilearn.datasets import get_collactor, name2sampler
 from semilearn.nets.utils import param_groups_layer_decay, param_groups_weight_decay
-from semilearn.core.optimizers import Lion, Sophia
+from semilearn.core.optimizers import Lion
+from semilearn.core.optimizers.sophia import SophiaG
 
 def get_net_builder(net_name, from_name: bool):
     """
@@ -217,8 +218,8 @@ def get_optimizer(net, optim_name='SGD', lr=0.1, momentum=0.9, weight_decay=0, l
     
     elif optim_name == 'Lion':
         optimizer = Lion(per_param_args, lr=lr, weight_decay=weight_decay)
-    elif optim_name == 'Sophia':
-        optimizer = Sophia(per_param_args, lr=lr, weight_decay=weight_decay)
+    elif optim_name == 'SophiaG':
+        optimizer = SophiaG(per_param_args, lr=lr, weight_decay=weight_decay)
     return optimizer
 
 
