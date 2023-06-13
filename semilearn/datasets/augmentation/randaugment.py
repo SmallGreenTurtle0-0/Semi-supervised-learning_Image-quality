@@ -180,23 +180,45 @@ def augment_list_no_color():
     ]
     return l
 
-    
+def augment_list_naver():  
+    l = [
+        # (AutoContrast, 0, 1),
+        # (Brightness, 0.05, 0.95),
+        # (Color, 0.05, 0.95),
+        # (Contrast, 0.05, 0.95),
+        (Equalize, 0, 1),
+        (Identity, 0, 1),
+        # (Posterize, 4, 8),
+        (Rotate, -5, 5),
+        # (Sharpness, 0.05, 0.95),
+        (ShearX, -0.03, 0.03),
+        (ShearY, -0.03, 0.03),
+        # (Solarize, 0, 256),
+        (TranslateX, -0.03, 0.03),
+        (TranslateY, -0.03, 0.03)
+    ]
+    return l
+
 class RandAugment:
-    def __init__(self, n, m, exclude_color_aug=False):
+    def __init__(self, n, m, image_review_task=True, exclude_color_aug=False):
         self.n = n
         self.m = m      # [0, 30] in fixmatch, deprecated.
-        if not exclude_color_aug:
+        if image_review_task:
+            self.augment_list = augment_list_naver()
+        elif not exclude_color_aug:
             self.augment_list = augment_list()
         else:
             self.augment_list = augment_list_no_color()
 
 
         
-    def __call__(self, img):
+    def __call__(self, img, image_review_task=True):
         ops = random.choices(self.augment_list, k=self.n)
         for op, min_val, max_val in ops:
             val = min_val + float(max_val - min_val)*random.random()
             img = op(img, val) 
+        if image_review_task:
+            return img
         cutout_val = random.random() * 0.5 
         img = Cutout(img, cutout_val) #for fixmatch
         return img

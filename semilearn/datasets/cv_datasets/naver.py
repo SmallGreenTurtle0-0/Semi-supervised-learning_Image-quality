@@ -33,7 +33,7 @@ def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data', inclu
         transforms.Resize(int(math.floor(img_size / crop_ratio))),
         RandomResizedCropAndInterpolation((img_size, img_size)),
         transforms.RandomHorizontalFlip(),
-        RandAugment(3, 10),
+        RandAugment(3, 7),
         transforms.ToTensor(),
         transforms.Normalize(imgnet_mean, imgnet_std)
     ])
