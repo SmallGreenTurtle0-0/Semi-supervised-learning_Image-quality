@@ -98,7 +98,7 @@ def get_dataset(args, algorithm, dataset, num_labels, num_classes, data_dir='./d
     elif dataset in ["imagenet", "imagenet127"]:
         lb_dset, ulb_dset, eval_dset = get_imagenet(args, algorithm, dataset, num_labels, num_classes, data_dir=data_dir, include_lb_to_ulb=include_lb_to_ulb)
         test_dset = None
-    elif dataset in ['naver_70k_round', 'sample', 'data70k', 'naver']:
+    elif dataset in ['naver_70k_round', 'sample', 'data70k', 'naver', 'naver1', 'naver2', 'Data']:
         lb_dset, ulb_dset, eval_dset = get_naver(args, algorithm, dataset, num_labels, num_classes, data_dir=data_dir, include_lb_to_ulb=include_lb_to_ulb)
         test_dset = None
     # speech dataset
