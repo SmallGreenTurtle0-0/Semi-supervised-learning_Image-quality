@@ -14,7 +14,7 @@ from torch.cuda.amp import autocast, GradScaler
 
 from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
 from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
-from semilearn.core.criterions import CELoss, ConsistencyLoss
+from semilearn.core.criterions import CELoss, ConsistencyLoss, FocalLoss
 from semilearn.core.metrics import MAE
 
 class AlgorithmBase:
@@ -94,6 +94,7 @@ class AlgorithmBase:
 
         # build supervised loss and unsupervised loss
         self.ce_loss = CELoss()
+        self.focal_loss = FocalLoss()
         self.consistency_loss = ConsistencyLoss()
 
         # other arguments specific to the algorithm

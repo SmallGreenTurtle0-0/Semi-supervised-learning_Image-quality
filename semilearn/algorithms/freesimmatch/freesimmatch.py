@@ -218,8 +218,9 @@ class FreeSimMatch(AlgorithmBase):
                 logits_x_ulb_s, feats_x_ulb_s = outs_x_ulb_s['logits'], outs_x_ulb_s['feat']
                 # logits_x_ulb_s, feats_x_ulb_s = self.model(x_ulb_s)
 
-            sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
-
+            # sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
+            sup_loss = self.focal_loss(logits_x_lb, y_lb, reduction='mean')
+            
             self.ema.apply_shadow()
             with torch.no_grad():
                 # ema teacher model

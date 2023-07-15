@@ -111,6 +111,11 @@ def Solarize(img, v):  # [0, 256]
     assert 0 <= v <= 256
     return PIL.ImageOps.solarize(img, v)
 
+def Posterize(img, v):  # [4, 8]
+    assert 4 <= v <= 8
+    v = int(v)
+    return PIL.ImageOps.posterize(img, v)
+
 
 def Cutout(img, v):  #[0, 60] => percentage: [0, 0.2] => change to [0, 0.5]
     assert 0.0 <= v <= 0.5
@@ -186,8 +191,9 @@ def augment_list_naver():
         # (Brightness, 0.05, 0.95),
         # (Color, 0.05, 0.95),
         # (Contrast, 0.05, 0.95),
-        (Equalize, 0, 1),
+        # (Equalize, 0, 1),
         (Identity, 0, 1),
+        (Posterize, 6, 8),
         # (Posterize, 4, 8),
         (Rotate, -5, 5),
         # (Sharpness, 0.05, 0.95),

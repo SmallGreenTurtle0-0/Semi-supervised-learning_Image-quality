@@ -1,6 +1,6 @@
 algorithm: freesimmatch
 save_dir: ./saved_models/usb_cv/
-save_name: freesimmatch_u1_b8
+save_name: freesimmatch_u1_b8_focalloss
 resume: False
 load_path: ./saved_models/usb_cv/freesimmatch_vit_small_patch16_224_data70k_AdamW_2_b8
 overwrite: True
