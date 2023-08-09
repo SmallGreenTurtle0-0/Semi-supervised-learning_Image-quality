@@ -12,7 +12,9 @@ from semilearn.datasets.augmentation import RandAugment
 from semilearn.datasets.utils import get_onehot
 from .datasetbase import BasicDataset
 
-def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data', include_lb_to_ulb=True):
+def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data', 
+              include_df=False, data_df=None,
+              include_lb_to_ulb=True):
               
     data_dir = os.path.join(data_dir, name.lower())
               
@@ -61,6 +63,14 @@ def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data', inclu
         targets = [int(label)]*len(os.listdir(path))    
         test_data.extend(imagepaths)
         test_targets.extend(targets)
+    if include_df:
+        for label in data_df['answer'].unique():
+            imagenames = data_df[data_df['answer'] == label]['imagename'].values
+            imagepaths = [os.path.join(data_dir, 'unlabel', imagename) for imagename in imagenames]
+            targets = [int(label)]*len(imagenames)
+            lb_data.extend(imagepaths)
+            lb_targets.extend(targets)
+            
     ulb_data, ulb_targets = [], []
     if alg != 'fullysupervised':
         path = os.path.join(data_dir, 'unlabel')

@@ -12,12 +12,14 @@ import torch
 import torch.nn.functional as F
 from torch.cuda.amp import autocast, GradScaler
 
+import pytorch_lightning as pl
+
 from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
 from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
 from semilearn.core.criterions import CELoss, ConsistencyLoss, FocalLoss
 from semilearn.core.metrics import MAE
 
-class AlgorithmBase:
+class AlgorithmBase(pl.LightningModule):
     """
         Base class for algorithms
         init algorithm specific parameters and common parameters
@@ -39,6 +41,7 @@ class AlgorithmBase:
         tb_log=None,
         logger=None,
         **kwargs):
+        super(AlgorithmBase, self).__init__()
         
         # common arguments
         self.args = args

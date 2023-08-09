@@ -1,6 +1,6 @@
 algorithm: freematch
 save_dir: ./saved_models/usb_cv/
-save_name: freematch_naver2_3
+save_name: freematch_u3_b8
 resume: False
 load_path: ./saved_models/usb_cv/freematch_naver1/latest_model.pth
 overwrite: True
@@ -40,7 +40,7 @@ num_workers: 4
 seed: 0
 world_size: 1
 rank: 0
-multiprocessing_distributed: True
+multiprocessing_distributed: False
 dist_url: tcp://127.0.0.1:10081
 dist_backend: nccl
 gpu: 0

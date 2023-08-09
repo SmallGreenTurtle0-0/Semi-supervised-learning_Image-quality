@@ -143,6 +143,7 @@ class FreeSimMatch(AlgorithmBase):
         self.ema_p = ema_p
         self.use_quantile = use_quantile
         self.clip_thresh = clip_thresh
+        
         # TODO：move this part into a hook
         # memory bank
         self.mem_bank = torch.randn(proj_size, K).cuda(self.gpu)
@@ -218,8 +219,8 @@ class FreeSimMatch(AlgorithmBase):
                 logits_x_ulb_s, feats_x_ulb_s = outs_x_ulb_s['logits'], outs_x_ulb_s['feat']
                 # logits_x_ulb_s, feats_x_ulb_s = self.model(x_ulb_s)
 
-            # sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
-            sup_loss = self.focal_loss(logits_x_lb, y_lb, reduction='mean')
+            sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
+            # sup_loss = self.focal_loss(logits_x_lb, y_lb, reduction='mean')
             
             self.ema.apply_shadow()
             with torch.no_grad():
@@ -260,7 +261,7 @@ class FreeSimMatch(AlgorithmBase):
                                                probs_x_ulb_w,
                                                'ce',
                                                mask=mask)
-
+            
             # calculate entropy loss
             if mask.sum() > 0:
                ent_loss, _ = entropy_loss(mask, logits_x_ulb_s, self.p_model, self.label_hist)
@@ -276,7 +277,8 @@ class FreeSimMatch(AlgorithmBase):
         log_dict = self.process_log_dict(sup_loss=sup_loss.item(), 
                                          unsup_loss=unsup_loss.item(), 
                                          total_loss=total_loss.item(), 
-                                         util_ratio=mask.float().mean().item())
+                                         util_ratio=mask.float().mean().item(),
+                                         global_thresh=self.time_p.item())
         return out_dict, log_dict
     
     def get_save_dict(self):

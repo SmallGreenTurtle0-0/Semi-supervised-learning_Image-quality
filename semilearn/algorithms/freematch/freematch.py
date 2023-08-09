@@ -108,7 +108,7 @@ class FreeMatch(AlgorithmBase):
                                           pseudo_label,
                                           'ce',
                                           mask=mask)
-            
+
             # calculate entropy loss
             if mask.sum() > 0:
                ent_loss, _ = entropy_loss(mask, logits_x_ulb_s, self.p_model, self.label_hist)

@@ -1,6 +1,6 @@
 algorithm: simmatch
 save_dir: ./saved_models/usb_cv/
-save_name: simmatch_u4_b8
+save_name: simmatch_naver2_u2_b8
 resume: False
 
 overwrite: True
@@ -14,7 +14,7 @@ batch_size: 8
 eval_batch_size: 16
 num_warmup_iter: 2000
 num_labels: 5
-uratio: 4
+uratio: 2
 ema_m: 0.999
 p_cutoff: 0.95
 in_loss_ratio: 0.5

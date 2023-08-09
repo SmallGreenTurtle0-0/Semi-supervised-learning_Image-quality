@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 class FocalLoss(nn.Module):
-    def __init__(self, gamma=2, alpha=None):
+    def __init__(self, gamma=2, alpha=[0.125, 0.1, 0.125, 0.25, 0.4]):
         super(FocalLoss, self).__init__()
         self.gamma = gamma
         self.alpha = alpha
@@ -37,7 +37,7 @@ class FocalLoss(nn.Module):
             if self.alpha is not None:
                 if self.alpha.type()!=logits.data.type():
                     self.alpha = self.alpha.type_as(logits.data)
-                at = self.alpha.gather(0, targets)
+                at = self.alpha.gather(0, targets.view(-1))
                 logpt = logpt * Variable(at)
         loss = -1 * (1-pt)**self.gamma * logpt
         if reduction == 'none':

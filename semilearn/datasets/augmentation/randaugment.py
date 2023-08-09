@@ -193,7 +193,7 @@ def augment_list_naver():
         # (Contrast, 0.05, 0.95),
         # (Equalize, 0, 1),
         (Identity, 0, 1),
-        (Posterize, 6, 8),
+        (Posterize, 7, 8),
         # (Posterize, 4, 8),
         (Rotate, -5, 5),
         # (Sharpness, 0.05, 0.95),
