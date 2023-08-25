@@ -95,6 +95,11 @@ def get_config():
     ## standard setting configurations
     parser.add_argument('--data_dir', type=str, default='./data')
     parser.add_argument('-ds', '--dataset', type=str, default='cifar10')
+    
+    parser.add_argument('--include_df', type=str2bool, default='False', help='flag of including dataframe data, default to False')
+    parser.add_argument('--df_path', type=str, default='./data/df.csv')
+    parser.add_argument('--root_df', type=str, default='label', help='root of image data in dataframe, default to label')
+    
     parser.add_argument('-nc', '--num_classes', type=int, default=10)
     parser.add_argument('--train_sampler', type=str, default='RandomSampler')
     parser.add_argument('--num_workers', type=int, default=1)

@@ -25,5 +25,9 @@ class CheckpointHook(Hook):
                     algorithm.save_model('model_best_mae_all.pth', save_path)
                 if algorithm.it == algorithm.best_it_mae_3_4:
                     algorithm.save_model('model_best_mae_3_4.pth', save_path)
+                if algorithm.it == algorithm.best_it_mae_all_reg:
+                    algorithm.save_model('model_best_mae_all_reg.pth', save_path)
+                if algorithm.it == algorithm.best_it_mae_3_4_reg:
+                    algorithm.save_model('model_best_mae_3_4_reg.pth', save_path)
 
         

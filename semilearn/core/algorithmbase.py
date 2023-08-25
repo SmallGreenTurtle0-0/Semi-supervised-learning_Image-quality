@@ -16,7 +16,7 @@ import pytorch_lightning as pl
 
 from semilearn.core.hooks import Hook, get_priority, CheckpointHook, TimerHook, LoggingHook, DistSamplerSeedHook, ParamUpdateHook, EvaluationHook, EMAHook, WANDBHook, AimHook
 from semilearn.core.utils import get_dataset, get_data_loader, get_optimizer, get_cosine_schedule_with_warmup, Bn_Controller
-from semilearn.core.criterions import CELoss, ConsistencyLoss, FocalLoss
+from semilearn.core.criterions import CELoss, ConsistencyLoss, FocalLoss, MAE_Loss, FocalL1Loss
 from semilearn.core.metrics import MAE
 
 class AlgorithmBase(pl.LightningModule):
@@ -78,6 +78,8 @@ class AlgorithmBase(pl.LightningModule):
         self.best_eval_acc, self.best_it_acc = 0.0, 0
         self.best_eval_mae_all, self.best_it_mae_all = np.inf, 0
         self.best_eval_mae_3_4, self.best_it_mae_3_4 = np.inf, 0
+        self.best_eval_mae_all_reg, self.best_it_mae_all_reg = np.inf, 0
+        self.best_eval_mae_3_4_reg, self.best_it_mae_3_4_reg = np.inf, 0
         self.bn_controller = Bn_Controller()
         self.net_builder = net_builder
         self.ema = None
@@ -99,6 +101,8 @@ class AlgorithmBase(pl.LightningModule):
         self.ce_loss = CELoss()
         self.focal_loss = FocalLoss()
         self.consistency_loss = ConsistencyLoss()
+        self.mae_loss = MAE_Loss()
+        self.focal_l1_loss = FocalL1Loss()
 
         # other arguments specific to the algorithm
         # self.init(**kwargs)
@@ -121,7 +125,7 @@ class AlgorithmBase(pl.LightningModule):
         """
         if self.rank != 0 and self.distributed:
             torch.distributed.barrier()
-        dataset_dict = get_dataset(self.args, self.algorithm, self.args.dataset, self.args.num_labels, self.args.num_classes, self.args.data_dir, self.args.include_lb_to_ulb)
+        dataset_dict = get_dataset(self.args, self.algorithm, self.args.dataset, self.args.num_labels, self.args.num_classes, self.args.data_dir, self.args.include_lb_to_ulb, self.args.include_df, self.args.df_path, self.args.root_df)
         if dataset_dict is None:
             return dataset_dict
 
@@ -330,10 +334,12 @@ class AlgorithmBase(pl.LightningModule):
         total_loss = 0.0
         total_num = 0.0
         mae = MAE(_range=range(self.num_classes)) 
+        mae_reg = MAE(_range=range(self.num_classes))
         y_true = []
         y_pred = []
         # y_probs = []
         y_logits = []
+        y_pred_scores = []
         with torch.no_grad():
             for data in eval_loader:
                 x = data['x_lb']
@@ -348,18 +354,25 @@ class AlgorithmBase(pl.LightningModule):
                 num_batch = y.shape[0]
                 total_num += num_batch
 
-                logits = self.model(x)[out_key]
-                
+                output = self.model(x)
+                logits = output[out_key]
+                scores = output['score'].squeeze(-1)
                 loss = F.cross_entropy(logits, y, reduction='mean', ignore_index=-1)
                 y_true.extend(y.cpu().tolist())
                 y_pred.extend(torch.max(logits, dim=-1)[1].cpu().tolist())
                 y_logits.append(logits.cpu().numpy())
+                y_pred_scores.extend(scores.cpu().numpy())
                 total_loss += loss.item() * num_batch
         y_true = np.array(y_true)
         y_pred = np.array(y_pred)
+        y_pred_scores = np.array(y_pred_scores)
         # convert numpy array to torch tensor
         mae.update(torch.from_numpy(y_pred), torch.from_numpy(y_true))
         mae_value = mae.values()
+        
+        mae_reg.update(torch.from_numpy(y_pred_scores), torch.from_numpy(y_true))
+        mae_reg_value = mae_reg.values()
+        
         y_logits = np.concatenate(y_logits)
         top1 = accuracy_score(y_true, y_pred)
         balanced_top1 = balanced_accuracy_score(y_true, y_pred)
@@ -370,6 +383,7 @@ class AlgorithmBase(pl.LightningModule):
         cf_mat = confusion_matrix(y_true, y_pred, normalize='true')
         self.print_fn('confusion matrix:\n' + np.array_str(cf_mat))
         mae.print(self.print_fn)
+        mae_reg.print(self.print_fn, regression=True)
         self.ema.restore()
         self.model.train()
 
@@ -378,6 +392,9 @@ class AlgorithmBase(pl.LightningModule):
         # add mae value to eval_dict
         for v, mae_v in mae_value.items():
             eval_dict[eval_dest+f'/mae_{v}'] = mae_v
+            
+        for v, mae_v in mae_reg_value.items():
+            eval_dict[eval_dest+f'/mae_{v}_reg'] = mae_v
         if return_logits:
             eval_dict[eval_dest+'/logits'] = y_logits
         return eval_dict

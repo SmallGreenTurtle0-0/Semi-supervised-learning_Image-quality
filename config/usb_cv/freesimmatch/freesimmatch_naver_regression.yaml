@@ -1,6 +1,6 @@
 algorithm: freesimmatch
 save_dir: ./saved_models/usb_cv/
-save_name: freesimmatch_u1_b8_regression
+save_name: freesimmatch_u1_b8_regression_focall1loss
 resume: False
 load_path: ./saved_models/usb_cv/freesimmatch_vit_small_patch16_224_data70k_AdamW_2_b8
 overwrite: True
@@ -14,13 +14,13 @@ batch_size: 8
 eval_batch_size: 16
 num_warmup_iter: 1000
 num_labels: 5
-uratio: 2
+uratio: 1
 ema_m: 0.999
 p_cutoff: 0.95
 in_loss_ratio: 0.001
 ulb_loss_ratio: 0.001
 ent_loss_ratio: 0.001
-reg_loss_ratio: 0.1
+reg_loss_ratio: 0.01
 proj_size: 128
 K: 256
 da_len: 32
@@ -32,7 +32,7 @@ optim: AdamW
 lr: 0.001
 # layer_decay: 0.5
 # momentum: 0.9
-weight_decay: 0.0001
+weight_decay: 0.001
 amp: False
 clip: 0.0
 use_cat: True
@@ -40,6 +40,11 @@ net: vit_small_patch16_224
 net_from_name: False
 data_dir:  /mnt/disk1/mbbank/cuong/Data
 dataset: data70k
+
+# include_df: True
+# df_path: '/mnt/disk1/mbbank/cuong/Data/naver2+_ver04.csv'
+# root_df: '/mnt/disk1/mbbank/cuong/Data/data70k/unlabel'
+
 train_sampler: RandomSampler
 num_classes: 5
 num_workers: 4

@@ -23,6 +23,9 @@ class LoggingHook(Hook):
                 print_text += "\nBEST_EVAL_ACC: {:.4f}, at {:d} iters".format(algorithm.best_eval_acc, algorithm.best_it_acc + 1)
                 print_text += "\nBEST_EVAL_MAE_ALL: {:.4f}, at {:d} iters".format(algorithm.best_eval_mae_all, algorithm.best_it_mae_all + 1)
                 print_text += "\nBEST_EVAL_MAE_3_4: {:.4f}, at {:d} iters".format(algorithm.best_eval_mae_3_4, algorithm.best_it_mae_3_4 + 1)
+                print_text += "\nBEST_EVAL_MAE_ALL_REGRESSION: {:.4f}, at {:d} iters".format(algorithm.best_eval_mae_all_reg, algorithm.best_it_mae_all_reg + 1)
+                print_text += "\nBEST_EVAL_MAE_3_4_REGRESSION: {:.4f}, at {:d} iters".format(algorithm.best_eval_mae_3_4_reg, algorithm.best_it_mae_3_4_reg + 1)
+                
                 # algorithm.print_fn(f"{algorithm.it + 1} iteration, USE_EMA: {algorithm.ema_m != 0}, {algorithm.log_dict}, BEST_EVAL_ACC: {algorithm.best_eval_acc}, at {algorithm.best_it + 1} iters")
                 algorithm.print_fn(print_text)
             

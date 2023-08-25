@@ -6,6 +6,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import os
 import math
+import pandas as pd
 
 from semilearn.datasets.augmentation import RandAugment, RandomResizedCropAndInterpolation, str_to_interp_mode
 from semilearn.datasets.augmentation import RandAugment
@@ -13,9 +14,10 @@ from semilearn.datasets.utils import get_onehot
 from .datasetbase import BasicDataset
 
 def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data', 
-              include_df=False, data_df=None,
-              include_lb_to_ulb=True):
-              
+              include_lb_to_ulb=True,
+              include_df=False, df_path=None, root_df=None, **kwargs):
+    if include_df:
+        df = pd.read_csv(df_path)
     data_dir = os.path.join(data_dir, name.lower())
               
     imgnet_mean = (0.485, 0.456, 0.406)
@@ -64,9 +66,9 @@ def get_naver(args, alg, name, num_labels, num_classes, data_dir='./data',
         test_data.extend(imagepaths)
         test_targets.extend(targets)
     if include_df:
-        for label in data_df['answer'].unique():
-            imagenames = data_df[data_df['answer'] == label]['imagename'].values
-            imagepaths = [os.path.join(data_dir, 'unlabel', imagename) for imagename in imagenames]
+        for label in df['answer'].unique():
+            imagenames = df[df['answer'] == label]['imagename'].values
+            imagepaths = [os.path.join(root_df, imagename) for imagename in imagenames]
             targets = [int(label)]*len(imagenames)
             lb_data.extend(imagepaths)
             lb_targets.extend(targets)

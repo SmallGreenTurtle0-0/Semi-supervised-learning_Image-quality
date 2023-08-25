@@ -60,9 +60,13 @@ class MAE(object):
         if n != 0:
             l1 = torch.abs(pred-target).sum()/n
             self.l1['all'].update(l1, n=1)
-    def print(self, print_fn=print):
+    def print(self, print_fn=print, regression=False):
         res = self.values()
+        if regression:
+            prefix = 'regression'
+        else:
+            prefix = 'classification'
         for k, v in res.items():
-            print_fn('MAE {}: {:.4f}, '.format(k, v))
+            print_fn('{} MAE {}: {:.4f}, '.format(prefix, k, v))
         
 

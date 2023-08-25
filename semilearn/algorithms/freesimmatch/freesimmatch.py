@@ -33,6 +33,13 @@ class SimMatch_Net(nn.Module):
             , proj_size)
         ])
         
+        self.reg_head = nn.Sequential(*[
+            nn.Linear(self.num_features, self.num_features),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.num_features, 1),
+            nn.ReLU(inplace=False)
+        ])
+        
     def l2norm(self, x, power=2):
         norm = x.pow(power).sum(1, keepdim=True).pow(1. / power)
         out = x.div(norm)
@@ -42,7 +49,8 @@ class SimMatch_Net(nn.Module):
         feat = self.backbone(x, only_feat=True)
         logits = self.backbone(feat, only_fc=True)
         feat_proj = self.l2norm(self.mlp_proj(feat))
-        return {'logits':logits, 'feat':feat_proj}
+        score = self.reg_head(feat)
+        return {'logits':logits, 'feat':feat_proj, 'score':score}
 
     def group_matcher(self, coarse=False):
         matcher = self.backbone.group_matcher(coarse, prefix='backbone.')
@@ -127,6 +135,7 @@ class FreeSimMatch(AlgorithmBase):
         self.init(T=args.T, p_cutoff=args.p_cutoff, proj_size=args.proj_size, K=args.K, smoothing_alpha=args.smoothing_alpha, da_len=args.da_len,
                   hard_label=args.hard_label, ema_p=args.ema_p, use_quantile=args.use_quantile, clip_thresh=args.clip_thresh)
         self.lambda_e = args.ent_loss_ratio
+        self.lambda_r = args.reg_loss_ratio
 
     def init(self, T, p_cutoff, proj_size, K, smoothing_alpha, da_len=0,
              hard_label=True, ema_p=0.999, use_quantile=True, clip_thresh=False):
@@ -201,14 +210,14 @@ class FreeSimMatch(AlgorithmBase):
                 # logits_x_ulb_s, feats_x_ulb_s = logits[num_lb:], feats[num_lb:]
                 inputs = torch.cat((x_lb, x_ulb_w, x_ulb_s))
                 outputs = self.model(inputs)
-                logits, feats = outputs['logits'], outputs['feat']
+                logits, feats, scores = outputs['logits'], outputs['feat'], outputs['score']
                 # logits, feats = self.model(inputs)
-                logits_x_lb, ema_feats_x_lb = logits[:num_lb], feats[:num_lb]
+                logits_x_lb, ema_feats_x_lb, scores_x_lb = logits[:num_lb], feats[:num_lb], scores[:num_lb]
                 ema_logits_x_ulb_w, logits_x_ulb_s = logits[num_lb:].chunk(2)
                 ema_feats_x_ulb_w, feats_x_ulb_s = feats[num_lb:].chunk(2)
             else:
                 outs_x_lb = self.model(x_lb)
-                logits_x_lb, ema_feats_x_lb  = outs_x_lb['logits'], outs_x_lb['feat']
+                logits_x_lb, ema_feats_x_lb, scores_x_lb  = outs_x_lb['logits'], outs_x_lb['feat'], outs_x_lb[:num_lb]
                 # logits_x_lb, ema_feats_x_lb = self.model(x_lb)
 
                 outs_x_ulb_w = self.model(x_ulb_w)
@@ -220,6 +229,8 @@ class FreeSimMatch(AlgorithmBase):
                 # logits_x_ulb_s, feats_x_ulb_s = self.model(x_ulb_s)
 
             sup_loss = self.ce_loss(logits_x_lb, y_lb, reduction='mean')
+            # reg_loss = self.mae_loss(scores_x_lb, y_lb.float(), reduction='mean')
+            reg_loss = self.focal_l1_loss(scores_x_lb, y_lb.float(), reduction='mean')
             # sup_loss = self.focal_loss(logits_x_lb, y_lb, reduction='mean')
             
             self.ema.apply_shadow()
@@ -269,12 +280,13 @@ class FreeSimMatch(AlgorithmBase):
                ent_loss = 0.0
             # ent_loss = 0.0
 
-            total_loss = sup_loss + self.lambda_u * unsup_loss + self.lambda_in * in_loss + self.lambda_e * ent_loss
+            total_loss = sup_loss + self.lambda_u * unsup_loss + self.lambda_in * in_loss + self.lambda_e * ent_loss + self.lambda_r * reg_loss
 
             self.update_bank(ema_feats_x_lb, y_lb, idx_lb)
 
         out_dict = self.process_out_dict(loss=total_loss, feat=feat_dict)
         log_dict = self.process_log_dict(sup_loss=sup_loss.item(), 
+                                         reg_loss=reg_loss.item(),
                                          unsup_loss=unsup_loss.item(), 
                                          total_loss=total_loss.item(), 
                                          util_ratio=mask.float().mean().item(),
@@ -325,5 +337,7 @@ class FreeSimMatch(AlgorithmBase):
             SSL_Argument('--ent_loss_ratio', float, 0.01),
             SSL_Argument('--use_quantile', str2bool, False),
             SSL_Argument('--clip_thresh', str2bool, False),
+            # regression
+            SSL_Argument('--reg_loss_ratio', float, 0.01),
 
         ]
